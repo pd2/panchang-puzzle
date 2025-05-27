@@ -17,12 +17,12 @@
     <title>Panchang Puzzle</title>
 
     <!-- The website stylesheet -->
-    <link rel="stylesheet" href="/style.css" />
-    <link rel="manifest" href="/manifest.json" >
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" >
     <link rel="icon" href="https://cdn.glitch.global/f2db3cf8-7581-4d45-804a-8eaa0cb01b12/panchang_puzzle.jpg" >
 
     <!-- The website JavaScript file -->
-    <script src="/script.js" defer></script>
+    <script src="script.js" defer></script>
   </head>
     <body>
         <noscript>
@@ -279,7 +279,7 @@
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function() {
           navigator.serviceWorker
-            .register("/serviceWorker.js")
+            .register("serviceWorker.js")
             .then(res => console.log("service worker registered"))
             .catch(err => console.log("service worker not registered", err))
         })
