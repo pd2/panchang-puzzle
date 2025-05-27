@@ -2,9 +2,9 @@ const staticDev = "panchang_puzzle"
 const service_worker_version = "v1.0103"
 const assets = [
   "/",
-  "/index.html",
-  "/style.css",
-  "/script.js"
+  "index.html",
+  "style.css",
+  "script.js"
 ]
 
 self.addEventListener("install", installEvent => {
