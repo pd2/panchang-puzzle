@@ -49,44 +49,6 @@ async function fetchPanchang(dateInput, callback) {
     }
 }
 
-/*
-async function fetchFreePanchang(callback){
-  
-  var request = require('request');
-  
-  var options = {
-    'method': 'POST',
-    'url': 'https://json.apiastro.com/planets/extended',
-    'headers': {
-      'Content-Type': 'application/json',
-      'x-api-key': 'aba6EleMF71wst0FpjwnT8kcNAty3BGhaZfggKrB'
-    },
-    body: JSON.stringify({
-      "year": 2025,
-      "month": 3,
-      "date": 15,
-      "hours": 17,
-      "minutes": 10,
-      "seconds": 0,
-      "latitude": 18.9333,
-      "longitude": 72.8166,
-      "timezone": 5.5,
-      "settings": {
-        "observation_point": "topocentric",
-        "ayanamsha": "lahiri",
-        "language": "en"
-      }
-    })
-
-  };
-  request(options, function (error, response) {
-    if (error) throw new Error(error);
-    console.log(response.body);
-    // panchang_data = response.body."Sun"
-  });
-
-}
-*/
 // fetchPanchang(onSvgLoad);
 
 const handleDropdownClicked = (event) => {
