@@ -4,9 +4,9 @@
   "start_url": "https://pd2.github.io/panchang-puzzle/",
   "icons": [
     {
-      "src": "assets/panchang_puzzle.jpg",
+      "src": "assets/panchang_puzzle.png",
       "sizes": "256x256",
-      "type": "image/jpg"
+      "type": "image/png"
     }
   ],
   "theme_color": "#ffffff",
