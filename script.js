@@ -51,6 +51,34 @@ async function fetchPanchang(dateInput, callback) {
 
 // fetchPanchang(onSvgLoad);
 
+function computePanchangLocally() {
+  const now = new Date();
+
+  // --- Sun's tropical ecliptic longitude (0–360°) ---
+  const sunEcl = Astronomy.SunPosition(now);
+  const sunLon = sunEcl.elon;          // degrees, 0–360, tropical
+
+  // --- Moon's ecliptic longitude (0–360°) ---
+  const moonEcl = Astronomy.EclipticGeoMoon(now);
+  const moonLon = moonEcl.lon;         // degrees, 0–360, tropical
+
+  // Convert tropical → sidereal (Lahiri ayanamsha ≈ 23.15° as of 2025)
+  // Lahiri ayanamsha increases ~50.3"/year from 23°09' at J2000.0
+  const J2000 = new Date('2000-01-01T12:00:00Z');
+  const yearsSinceJ2000 = (now - J2000) / (365.25 * 24 * 3600 * 1000);
+  const ayanamsha = 23.15 + (yearsSinceJ2000 - 25) * (50.3 / 3600); // approx
+  
+  const siderealSun  = ((sunLon  - ayanamsha) % 360 + 360) % 360;
+  const siderealMoon = ((moonLon - ayanamsha) % 360 + 360) % 360;
+
+  // --- Panchang elements ---
+  const solarMonth   = Math.floor(siderealSun  / 30);        // 0–11 (Mesha…Meena)
+  const nakshatra    = Math.floor(siderealMoon / (360 / 27)); // 0–26 (Ashwini…Revati)
+  const lunarZodiac  = Math.floor(siderealMoon / 30);         // 0–11 (Chandra Rashi)
+
+  return { solarMonth, nakshatra, lunarZodiac };
+}
+
 const handleDropdownClicked = (event) => {
 	const menuOverlay = document.getElementById("menuOverlay");
 	menuOverlay.style.display = menuOverlay.style.display === "block" ? "none" : "block" ;
