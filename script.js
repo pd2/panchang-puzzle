@@ -98,11 +98,11 @@ function computePanchangLocally(userInpDate) {
   const moonEcl = Astronomy.EclipticGeoMoon(now);
   const moonLon = moonEcl.lon;         // degrees, 0–360, tropical
 
-  // Convert tropical → sidereal (Lahiri ayanamsha ≈ 23.15° as of 2025)
-  // Lahiri ayanamsha increases ~50.3"/year from 23°09' at J2000.0
+  // Convert tropical → sidereal (Lahiri ayanamsha ≈ 23.857° as of 2000)
+  // Lahiri ayanamsha increases ~50.3"/year from 23°51' at J2000.0
   const J2000 = new Date('2000-01-01T12:00:00Z');
   const yearsSinceJ2000 = (now - J2000) / (365.25 * 24 * 3600 * 1000);
-  const ayanamsha = 23.15 + (yearsSinceJ2000 - 25) * (50.29 / 3600); // approx
+  const ayanamsha = 23.857 + (yearsSinceJ2000) * (50.29 / 3600); // approx
   
   const siderealSun  = ((sunLon  - ayanamsha) % 360 + 360) % 360;
   const siderealMoon = ((moonLon - ayanamsha) % 360 + 360) % 360;
