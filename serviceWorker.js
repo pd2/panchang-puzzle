@@ -1,10 +1,12 @@
 const staticDev = "panchang_puzzle"
-const service_worker_version = "v2.0"
+const service_worker_version = "v2.1"
 const assets = [
   "/",
   "index.html",
   "style.css",
-  "script.js"
+  "script.js",
+  "manifest.json",
+  "astronomy.browser.js"
 ]
 
 self.addEventListener("install", installEvent => {
