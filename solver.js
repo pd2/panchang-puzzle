@@ -232,7 +232,19 @@
     let hex = "";
     for (const id of PCS_LIST) {
       const p = solutionByPiece[id];
-      const rotCode = (4 - Math.trunc(p.angle / 90)) % 4;
+      // getHexPcsPos() (script.js) packs the *mirror-adjusted* angle into the
+      // rotation bits, not the raw visual angle -- see the `pcsAngle = (360 -
+      // pcsAngle) % 360` step it applies for mirrored, non-front pieces
+      // before computing rotCode. placePieces() undoes the same adjustment
+      // on decode, so both sides must agree on it or the piece rotates/lands
+      // 180deg off from where it's supposed to (only visible for mirrored,
+      // non-front pieces at a 90/270 visual angle -- 0 and 180 are fixed
+      // points of this transform, which is why it's easy to miss).
+      let byteAngle = p.angle;
+      if (p.mirrored && !FRONT_PCS.has(id)) {
+        byteAngle = (360 - byteAngle) % 360;
+      }
+      const rotCode = (4 - Math.trunc(byteAngle / 90)) % 4;
       const pcsPos = p.xPos + (p.yPos * 8) + (rotCode * 64);
       hex += pcsPos.toString(16).padStart(2, "0");
     }
