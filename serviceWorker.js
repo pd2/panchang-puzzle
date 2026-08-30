@@ -6,7 +6,7 @@ const assets = [
   "style.css",
   "script.js",
   "manifest.json",
-  "astronomy.browser.js"
+  "assets/astronomy.browser.js"
 ]
 
 self.addEventListener("install", installEvent => {
