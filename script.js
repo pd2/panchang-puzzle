@@ -991,7 +991,7 @@ function updateSolutionMessage(msg,displaySolBtn = true) {
 }
 
 chkBtn = document.getElementById("check");
-chkBtn.style.display = 'none';
+// chkBtn.style.display = 'none';
 
 function startChkBtnAnimation() {
 	// unicode char 003C is less than character starting html tags
