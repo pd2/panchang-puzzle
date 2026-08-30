@@ -347,7 +347,6 @@ const textColorNoSol = "white";
 const labelTextSol = "A solution exists";
 const labelSolFound = "Solution found";
 const pcsList = ["sSpcs","sLpcs","Qpcs","bSpcs","lSpcs","bLpcs","Ipcs","Cpcs","eLpcs","Tpcs"];
-const solutionsServerURI = "//olivierrt.pythonanywhere.com/dailycalendarpuzzlesolver";
 const gridStep = 100;
 const alignFactor = 3;
 const constViewBoxHeight = 1100;
@@ -371,7 +370,6 @@ var hexPcsPos;
 var formAction;
 var httpReqDate;
 var httpReqSide;
-var xmlHttpReq = new XMLHttpRequest();
 var isHttpReqForEnd = false;
 var checkButtonCaption;
 // Variable for clock management
@@ -1007,24 +1005,22 @@ function stopChkBtnAnimation() {
 	chkBtn.innerHTML = checkButtonCaption;
 }
 
-// Function call upon response from server about the request sent by checkSol
-function httpRequestEnded() {
-	if ( isHttpReqForEnd == false ) {
-		// Stop check button animation
-		stopChkBtnAnimation();
-	}
+// Called with the locally-computed solver response (see checkSol()) to update
+// the Check/Solution UI. Used both for an explicit "Check" click and for the
+// automatic check fired by checkIfPuzzleSolved() once every piece is placed.
+function processSolverResponse(requestResponse) {
 
 	// count the number of placed pcs in returned hex string
 	var nbPcsPlaced = nbPcs;
-	requestResponse = xmlHttpReq.responseText;
 	if ( hexPcsPos.match(/ff/g) ) {
 		nbPcsPlaced = pcsList.length -  (hexPcsPos.match(/ff/g)).length;
 	}
 
-	//console.log("http request with PcsPos=" + hexPcsPos  + " date: " + httpReqDate + " side: " + httpReqSide + " get response : " + requestResponse);
+	//console.log("solving for PcsPos=" + hexPcsPos  + " date: " + httpReqDate + " side: " + httpReqSide + " got solution : " + requestResponse);
 
-	// null is not more a possible answer from the server since it has been updated
-	if ( requestResponse == "null" ){
+	// null means the local solver found no solution for this date (see solver.js;
+	// happens for a small fraction of dates -- proven unsolvable with this piece set)
+	if ( requestResponse == null ){
 		if ( isHttpReqForEnd == false ) {
 			updateSolutionMessage(labelTextNoSol);
 			solution = null;
@@ -1104,16 +1100,11 @@ function checkSol() {
 
 	hexPcsPos = getHexPcsPos();
 
-	var requestResponse = null;
-	// manage the protocol because http request are blocked on https pages and vice-versa
-	var theUrl = location.protocol + solutionsServerURI + "?date=" + httpReqDate + "&side=" + httpReqSide + "&pcspos=" + hexPcsPos + "&action=check";
-	xmlHttpReq.open( "GET", theUrl, true); // false for synchronous request
-	xmlHttpReq.onload = httpRequestEnded;
-	// xmlHttpReq.send( null );
-	if ( isHttpReqForEnd == false ) {
-		// start animation of "check" button to show that the request has been taken into account
-		// startChkBtnAnimation();
-	}
+	// Solve locally (see solver.js) instead of querying an external solver server.
+	var requestResponse = PanchangSolver.solvePanchang(
+		panchang_data.maasa_num, panchang_data.nakshatra_num, panchang_data.raashi_num
+	);
+	processSolverResponse(requestResponse);
 }
 
 function roundToGrid(value) {
