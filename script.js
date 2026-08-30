@@ -86,9 +86,9 @@ async function fetchPanchang(dateInput, callback) {
 
 // fetchPanchang(onSvgLoad);
 
-function computePanchangLocally(userInpDate) {
+function computePanchangLocally() {
   panchang_data = {};
-  const now = userInpDate;//new Date();
+  const now = new Date();
 
   // --- Sun's tropical ecliptic longitude (0–360°) ---
   const sunEcl = Astronomy.SunPosition(now);
@@ -98,11 +98,11 @@ function computePanchangLocally(userInpDate) {
   const moonEcl = Astronomy.EclipticGeoMoon(now);
   const moonLon = moonEcl.lon;         // degrees, 0–360, tropical
 
-  // Convert tropical → sidereal (Lahiri ayanamsha ≈ 23.857° as of 2000)
-  // Lahiri ayanamsha increases ~50.3"/year from 23°51' at J2000.0
+  // Convert tropical → sidereal (Lahiri ayanamsha ≈ 23.15° as of 2025)
+  // Lahiri ayanamsha increases ~50.3"/year from 23°09' at J2000.0
   const J2000 = new Date('2000-01-01T12:00:00Z');
   const yearsSinceJ2000 = (now - J2000) / (365.25 * 24 * 3600 * 1000);
-  const ayanamsha = 23.857 + (yearsSinceJ2000) * (50.29 / 3600); // approx
+  const ayanamsha = 23.15 + (yearsSinceJ2000 - 25) * (50.29 / 3600); // approx
   
   const siderealSun  = ((sunLon  - ayanamsha) % 360 + 360) % 360;
   const siderealMoon = ((moonLon - ayanamsha) % 360 + 360) % 360;
@@ -347,7 +347,6 @@ const textColorNoSol = "white";
 const labelTextSol = "A solution exists";
 const labelSolFound = "Solution found";
 const pcsList = ["sSpcs","sLpcs","Qpcs","bSpcs","lSpcs","bLpcs","Ipcs","Cpcs","eLpcs","Tpcs"];
-const solutionsServerURI = "//olivierrt.pythonanywhere.com/dailycalendarpuzzlesolver";
 const gridStep = 100;
 const alignFactor = 3;
 const constViewBoxHeight = 1100;
@@ -371,7 +370,6 @@ var hexPcsPos;
 var formAction;
 var httpReqDate;
 var httpReqSide;
-var xmlHttpReq = new XMLHttpRequest();
 var isHttpReqForEnd = false;
 var checkButtonCaption;
 // Variable for clock management
@@ -528,7 +526,7 @@ function dateChanged(date){
 	let newDate = new Date(date);
     let validDate = newDate.toISOString().split('T')[0];
 	// updSquaresPos(newDate);
-	computePanchangLocally(new Date(validDate));
+	computePanchangLocally();
 	hideLoadingPopup(); // Always hide popup after fetch
     updSquaresPos();
 }
@@ -740,7 +738,7 @@ function onSvgLoad() {
 	}
 	// Place the grey squares in puzzle corresponding to selected date
 	dateInput.value = validDate;
-	computePanchangLocally(new Date(dateInput.value));
+	computePanchangLocally();
 	hideLoadingPopup(); // Always hide popup after fetch
     updSquaresPos();
 	// updSquaresPos(validDate);
@@ -1007,24 +1005,22 @@ function stopChkBtnAnimation() {
 	chkBtn.innerHTML = checkButtonCaption;
 }
 
-// Function call upon response from server about the request sent by checkSol
-function httpRequestEnded() {
-	if ( isHttpReqForEnd == false ) {
-		// Stop check button animation
-		stopChkBtnAnimation();
-	}
+// Called with the locally-computed solver response (see checkSol()) to update
+// the Check/Solution UI. Used both for an explicit "Check" click and for the
+// automatic check fired by checkIfPuzzleSolved() once every piece is placed.
+function processSolverResponse(requestResponse) {
 
 	// count the number of placed pcs in returned hex string
 	var nbPcsPlaced = nbPcs;
-	requestResponse = xmlHttpReq.responseText;
 	if ( hexPcsPos.match(/ff/g) ) {
 		nbPcsPlaced = pcsList.length -  (hexPcsPos.match(/ff/g)).length;
 	}
 
-	//console.log("http request with PcsPos=" + hexPcsPos  + " date: " + httpReqDate + " side: " + httpReqSide + " get response : " + requestResponse);
+	//console.log("solving for PcsPos=" + hexPcsPos  + " date: " + httpReqDate + " side: " + httpReqSide + " got solution : " + requestResponse);
 
-	// null is not more a possible answer from the server since it has been updated
-	if ( requestResponse == "null" ){
+	// null means the local solver found no solution for this date (see solver.js;
+	// happens for a small fraction of dates -- proven unsolvable with this piece set)
+	if ( requestResponse == null ){
 		if ( isHttpReqForEnd == false ) {
 			updateSolutionMessage(labelTextNoSol);
 			solution = null;
@@ -1104,16 +1100,11 @@ function checkSol() {
 
 	hexPcsPos = getHexPcsPos();
 
-	var requestResponse = null;
-	// manage the protocol because http request are blocked on https pages and vice-versa
-	var theUrl = location.protocol + solutionsServerURI + "?date=" + httpReqDate + "&side=" + httpReqSide + "&pcspos=" + hexPcsPos + "&action=check";
-	xmlHttpReq.open( "GET", theUrl, true); // false for synchronous request
-	xmlHttpReq.onload = httpRequestEnded;
-	// xmlHttpReq.send( null );
-	if ( isHttpReqForEnd == false ) {
-		// start animation of "check" button to show that the request has been taken into account
-		// startChkBtnAnimation();
-	}
+	// Solve locally (see solver.js) instead of querying an external solver server.
+	var requestResponse = PanchangSolver.solvePanchang(
+		panchang_data.maasa_num, panchang_data.nakshatra_num, panchang_data.raashi_num
+	);
+	processSolverResponse(requestResponse);
 }
 
 function roundToGrid(value) {
