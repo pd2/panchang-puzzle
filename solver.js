@@ -143,7 +143,14 @@
         // search anchors generously; board is only 7x8 so this stays tiny
         for (let A = -3; A <= 9; A++) {
           for (let B = -3; B <= 9; B++) {
-            const absCells = shape.map(([cx, cy]) => [cx + A, cy + B]);
+            // A is tx/100 (pixel anchor / cell size); boardCells()'s cell g
+            // covers pixel [100*(g+1), 100*(g+2)) (it accounts for
+            // boardXcoord=100 the same way computePcsPos() does), while a
+            // shape cell (cx,cy) translated by tx=100*A occupies pixel
+            // [100*(cx+A), 100*(cx+A+1)) -- so the matching board index is
+            // cx+A-1, not cx+A. Missing that -1 here validated every
+            // placement one board cell off from where it actually renders.
+            const absCells = shape.map(([cx, cy]) => [cx + A - 1, cy + B - 1]);
             if (absCells.every(([x, y]) => boardSet.has(cellKey(x, y)))) {
               const xPos = A - 1 + xOfs;
               const yPos = B - 1 + yOfs;
