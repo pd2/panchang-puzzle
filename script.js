@@ -86,9 +86,9 @@ async function fetchPanchang(dateInput, callback) {
 
 // fetchPanchang(onSvgLoad);
 
-function computePanchangLocally() {
+function computePanchangLocally(userInpDate) {
   panchang_data = {};
-  const now = new Date();
+  const now = userInpDate;//new Date();
 
   // --- Sun's tropical ecliptic longitude (0–360°) ---
   const sunEcl = Astronomy.SunPosition(now);
@@ -528,7 +528,7 @@ function dateChanged(date){
 	let newDate = new Date(date);
     let validDate = newDate.toISOString().split('T')[0];
 	// updSquaresPos(newDate);
-	computePanchangLocally();
+	computePanchangLocally(new Date(validDate));
 	hideLoadingPopup(); // Always hide popup after fetch
     updSquaresPos();
 }
@@ -740,7 +740,7 @@ function onSvgLoad() {
 	}
 	// Place the grey squares in puzzle corresponding to selected date
 	dateInput.value = validDate;
-	computePanchangLocally();
+	computePanchangLocally(new Date(dateInput.value));
 	hideLoadingPopup(); // Always hide popup after fetch
     updSquaresPos();
 	// updSquaresPos(validDate);
