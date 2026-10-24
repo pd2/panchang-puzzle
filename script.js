@@ -331,6 +331,7 @@ function resetBtnAction() {
 		initPcsPos(false);
 	}
 	solvedShown = false;
+	clearHint();
 	// Reset and start clock
 	resetClock();
 	startClock();
@@ -1537,6 +1538,7 @@ function makeDraggable(evt) {
 			// Give back to the piece their initial color, to cancel checkSol coloration
 			restoreAllPlacedPcsColor();
 			updateSolutionMessage();
+			clearHint();
 			if (solvedShown) { solvedShown = false; startClock(); }
 			solvedShown = false;
 
@@ -1640,4 +1642,105 @@ function checkIfPuzzleSolved() {
   pauseClock();
   updateSolutionMessage(
     labelSolFound + " for " + new Date(dateToSolve.value).toDateString(), false);
+}
+
+let _pre = null, hintPiece = null, hintStage = 0, lastHintId = null;
+const getPre = () => (_pre ||= PanchangSolver.allPlacements());
+
+function solveWith(fixed) {
+  const ex = PanchangSolver.excludedCellsFor(
+    panchang_data.maasa_num, panchang_data.nakshatra_num, panchang_data.raashi_num);
+  return PanchangSolver.solve(ex, getPre(), fixed);
+}
+
+// cells fully and exclusively covered by each piece on the board
+function readPlacedPieces() {
+  const ctm = mySvg.getScreenCTM(), pt = mySvg.createSVGPoint();
+  const cellsOf = {};
+  for (const [cx, cy] of PanchangSolver.boardCells()) {
+    pt.x = boardXcoord + cx * 100 + 50;
+    pt.y = boardYcoord + cy * 100 + 50;
+    const s = pt.matrixTransform(ctm);
+    const ids = document.elementsFromPoint(s.x, s.y)
+      .filter(e => e.classList.contains("draggable")).map(e => e.id);
+    if (ids.length === 1) (cellsOf[ids[0]] ||= []).push(cx + "," + cy);
+  }
+  const fixed = {};
+  for (const id of pcsList) {
+    if (cellsOf[id] && cellsOf[id].length === PanchangSolver.BASE_SHAPES[id].length)
+      fixed[id] = new Set(cellsOf[id]);
+  }
+  return fixed;
+}
+
+function clearHint() {
+  document.getElementById("hintGhost")?.remove();
+  if (hintPiece) { setInitialColor(hintPiece); hintPiece = null; }
+  hintStage = 0;
+}
+
+function showGhost(cells) {
+  const NS = "http://www.w3.org/2000/svg";
+  const g = document.createElementNS(NS, "g");
+  g.id = "hintGhost";
+  g.style.pointerEvents = "none";
+  for (const [x, y] of cells) {
+    const r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", boardXcoord + x * 100);
+    r.setAttribute("y", boardYcoord + y * 100);
+    r.setAttribute("width", 100);
+    r.setAttribute("height", 100);
+    r.setAttribute("fill", "gold");
+    r.setAttribute("fill-opacity", "0.6");
+    r.setAttribute("stroke", "orange");
+    g.appendChild(r);
+  }
+  mySvg.appendChild(g);
+}
+
+function giveHint() {
+  // second press on the same hint -> reveal exact spot
+  if (hintStage === 1 && hintPiece && window._hintSol) {
+    showGhost(window._hintSol[hintPiece.id].absCells);
+    hintStage = 2;
+    return;
+  }
+  clearHint();
+  const fixed = readPlacedPieces();
+  const sol = solveWith(fixed);
+
+  if (!sol) {   // something placed is wrong
+    const culprits = Object.keys(fixed).filter(id => {
+      const f = { ...fixed }; delete f[id];
+      return solveWith(f) !== null;
+    });
+    if (culprits.length) {
+      culprits.forEach(id => mySvg.getElementById(id).style.fill = labelColorNoSol);
+      updateSolutionMessage("Hint: the red piece(s) are in the wrong place", false);
+    } else {
+      updateSolutionMessage("Hint: two or more pieces are off - try moving a few", false);
+    }
+    return;
+  }
+
+  // next piece = the one covering the first uncovered cell in reading order
+  const covered = new Set(Object.values(fixed).flatMap(s => [...s]));
+  const gray = PanchangSolver.excludedCellsFor(
+    panchang_data.maasa_num, panchang_data.nakshatra_num, panchang_data.raashi_num)
+    .map(c => c.join(","));
+  const next = PanchangSolver.boardCells()
+    .map(([x, y]) => x + "," + y)
+    .sort((a, b) => a.split(",")[1] - b.split(",")[1] || a.split(",")[0] - b.split(",")[0])
+    .find(k => !covered.has(k) && !gray.includes(k));
+  if (!next) return;                      // nothing left to hint
+
+  const id = pcsList.find(pid => !fixed[pid] &&
+    sol[pid].absCells.some(([x, y]) => x + "," + y === next));
+  hintPiece = mySvg.getElementById(id);
+  hintPiece.style.fill = "gold";
+  window._hintSol = sol;
+  hintStage = 1;
+  const p = sol[id];
+  updateSolutionMessage("Hint: try the gold piece next" +
+    (p.mirrored && !PanchangSolver.FRONT_PCS.has(id) ? " (flipped over)" : ""), false);
 }
