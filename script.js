@@ -1618,7 +1618,7 @@ function isPuzzleComplete() {
 
   for (let cy = 0; cy < 8; cy++) {
     for (let cx = 0; cx < 7; cx++) {
-      if (cx === 6 && (cy < 2 || cy > 5)) continue;       // not part of board
+      if (cx === 6 && (cy < 2 || cy > 4)) continue;       // right-hand bump is rows 2-4 only
       const px = boardXcoord + cx * boardCellWidth;
       const py = boardYcoord + cy * boardCellHeight;
       pt.x = px + boardCellWidth / 2;                      // cell centre
