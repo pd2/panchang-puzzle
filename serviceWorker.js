@@ -1,5 +1,5 @@
 const staticDev = "panchang_puzzle"
-const service_worker_version = "v2.1"
+const service_worker_version = "v3.0"
 const assets = [
   "/",
   "index.html",
