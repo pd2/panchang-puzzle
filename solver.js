@@ -166,7 +166,7 @@
   }
 
   // --- exact-cover backtracking ---
-  function solve(excludedCells, precomputed) {
+  function solve(excludedCells, precomputed, fixed) {
     const { board, byPiece } = precomputed || allPlacements();
     const excludedSet = new Set(excludedCells.map(([x, y]) => cellKey(x, y)));
     const cells = board.filter(([x, y]) => !excludedSet.has(cellKey(x, y)));
@@ -180,6 +180,9 @@
     const cellToPlacements = cells.map(() => []);
     for (const id of PCS_LIST) {
       for (const p of byPiece[id]) {
+        const f = fixed && fixed[id];                       // Set of "x,y" keys, or undefined
+        if (f && !(p.absCells.length === f.size &&
+                   p.absCells.every(([x, y]) => f.has(cellKey(x, y))))) continue;
         let mask = 0n, ok = true;
         for (const [x, y] of p.absCells) {
           const idx = cellIndex.get(cellKey(x, y));
