@@ -330,6 +330,7 @@ function resetBtnAction() {
 	} else {
 		initPcsPos(false);
 	}
+	solvedShown = false;
 	// Reset and start clock
 	resetClock();
 	startClock();
@@ -1536,6 +1537,8 @@ function makeDraggable(evt) {
 			// Give back to the piece their initial color, to cancel checkSol coloration
 			restoreAllPlacedPcsColor();
 			updateSolutionMessage();
+			if (solvedShown) { solvedShown = false; startClock(); }
+			solvedShown = false;
 
 			// Short click and long click detection initialization
 			isLongpress = false;
@@ -1543,7 +1546,14 @@ function makeDraggable(evt) {
 			longpressTimer = setTimeout(chkTout,longpressDur);
 		}
 	}
-
+	
+	let autoPaused = false;
+	document.addEventListener("visibilitychange", () => {
+	  const playing = document.getElementById("clockButtonImg").src !== playImgSrc;
+	  if (document.hidden && playing) { pauseClock(); autoPaused = true; }
+	  else if (!document.hidden && autoPaused) { startClock(); autoPaused = false; }
+	});
+	
 	function chkTout() {
 		if ( isClick == true ) {
 			isLongpress=true;
@@ -1595,3 +1605,39 @@ function makeDraggable(evt) {
 	}
 
 }// makeDraggable
+
+function isPuzzleComplete() {
+  const ctm = mySvg.getScreenCTM();
+  const pt = mySvg.createSVGPoint();
+
+  // gray cells (top-left corners, from updSquaresPos)
+  const gray = ["weekdaySquare", "daySquare", "monthSquare"].map(id => {
+    const e = document.getElementById(id);
+    return `${e.getAttribute("x")},${e.getAttribute("y")}`;
+  });
+
+  for (let cy = 0; cy < 8; cy++) {
+    for (let cx = 0; cx < 7; cx++) {
+      if (cx === 6 && (cy < 2 || cy > 5)) continue;       // not part of board
+      const px = boardXcoord + cx * boardCellWidth;
+      const py = boardYcoord + cy * boardCellHeight;
+      pt.x = px + boardCellWidth / 2;                      // cell centre
+      pt.y = py + boardCellHeight / 2;
+      const s = pt.matrixTransform(ctm);
+      const n = document.elementsFromPoint(s.x, s.y)
+        .filter(e => e.classList.contains("draggable")).length;
+      const expected = gray.includes(`${px},${py}`) ? 0 : 1;
+      if (n !== expected) return false;
+    }
+  }
+  return true;
+}
+
+let solvedShown = false;
+function checkIfPuzzleSolved() {
+  if (solvedShown || !isPuzzleComplete()) return;
+  solvedShown = true;
+  pauseClock();
+  updateSolutionMessage(
+    labelSolFound + " for " + new Date(dateToSolve.value).toDateString(), false);
+}
