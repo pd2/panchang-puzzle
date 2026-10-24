@@ -1,6 +1,6 @@
 // Handle of menu inspired by https://codepen.io/rajanchaudhari08/pen/KKGjmQG
 var mainMenuHeight;
-const nbButtonsInMainMenu = 6;
+const nbButtonsInMainMenu = 7;
 
 var panchang_data;
 
